@@ -36,5 +36,5 @@ HANZO_PRIVATE_KEY=0x... ./contracts/Deploy.sh https://rpc.hanzo.network
 
 ## Upstream pins
 
-- `ghcr.io/luxfi/bridge`: v1.1.39
+- `ghcr.io/luxfi/bridge`: v2.0.0
 - `@luxfi/standard`: v1.7.5
