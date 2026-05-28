@@ -1,0 +1,27 @@
+{
+  "_comment": "Hanzo Bridge deployment manifest. Consumed by contracts/Deploy.sh -> forge script DeployTenant.s.sol from @luxfi/standard.",
+
+  "brand": "Hanzo Bridge",
+
+  "governance":  "0x0000000000000000000000000000000000000001",
+  "feeReceiver": "0x0000000000000000000000000000000000000002",
+  "opsOperator": "0x0000000000000000000000000000000000000003",
+
+  "mpcOperators": [
+    "0x0000000000000000000000000000000000000010",
+    "0x0000000000000000000000000000000000000011",
+    "0x0000000000000000000000000000000000000012",
+    "0x0000000000000000000000000000000000000013",
+    "0x0000000000000000000000000000000000000014"
+  ],
+
+  "basketAllowlist": {
+    "USD": ["USDC", "USDT", "DAI"],
+    "BTC": ["BTC"],
+    "ETH": ["ETH"],
+    "SOL": ["SOL"],
+    "TON": ["TON"],
+    "XRP": ["XRP"],
+    "DOT": ["DOT"]
+  }
+}

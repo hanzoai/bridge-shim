@@ -1,0 +1,5 @@
+/contracts/lib/
+*.test
+/coverage.out
+.DS_Store
+.env
