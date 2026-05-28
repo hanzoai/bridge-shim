@@ -1,0 +1,91 @@
+# Hanzo Bridge — tenant configuration.
+#
+# Mounted at /etc/bridge/tenant.yaml in the K8s deployment and passed
+# to the upstream bridge binary via --tenant-config /etc/bridge/tenant.yaml.
+
+brand:
+  name:         "Hanzo Bridge"
+  slug:         "hanzo-bridge"
+  primaryColor: "#000000"
+  logoURL:      "/logo.svg"
+  faviconURL:   "/icon.svg"
+  docsURL:      "https://docs.hanzo.ai"
+  title:        "Hanzo Bridge"
+
+# Hanzo EVM chainId.
+network:
+  id:          36963
+  name:        "Hanzo Mainnet"
+  rpcURL:      "https://rpc.hanzo.network"
+  explorerURL: "https://explorer.hanzo.network"
+
+iam:
+  endpoint:     "https://hanzo.id"
+  clientID:     "hanzo-bridge"
+  organization: "hanzo"
+
+kms:
+  endpoint:    "https://kms.hanzo.ai"
+  projectID:   "hanzo-bridge"
+  environment: "prod"
+
+mpc:
+  url:          "http://mpc-node-0.mpc-node-headless.hanzo-mpc.svc:9800"
+  orgID:        "hanzo-bridge"
+  dashboardURL: "http://mpc-dashboard.hanzo-mpc.svc:8081"
+  operators:
+    - "hanzo-mpc-node-0"
+    - "hanzo-mpc-node-1"
+    - "hanzo-mpc-node-2"
+    - "hanzo-mpc-node-3"
+    - "hanzo-mpc-node-4"
+  threshold: 3
+
+# Hanzo's bridge is primarily internal (Hanzo L1 destination), so
+# strict-pq is the default. Governance flips classical-compat only
+# for ad-hoc external L1 bridging windows.
+pqProfile: "strict-pq"
+
+supportedChains: ["eth", "btc", "sol", "ton", "xrp", "dot", "hanzo"]
+
+basketAllowlist:
+  USD: ["USDC", "USDT", "DAI"]
+  BTC: ["BTC"]
+  ETH: ["ETH"]
+  SOL: ["SOL"]
+  TON: ["TON"]
+  XRP: ["XRP"]
+  DOT: ["DOT"]
+
+feeReceiverAddr: "0xdEaD000000000000000000000000000000000000"
+
+domain: "bridge.hanzo.network"
+
+releasePool:
+  evm:
+    size:             10
+    mintNetwork:      "HANZO_MAINNET"
+    balanceThreshold: "100000000000000000"
+  sol:
+    size:             5
+    mintNetwork:      "SOLANA_MAINNET"
+    balanceThreshold: "1000000000"
+  btc:
+    size:             5
+    mintNetwork:      "BITCOIN_MAINNET"
+    balanceThreshold: "100000"
+  xrp:
+    size:             5
+    mintNetwork:      "XRP_MAINNET"
+    balanceThreshold: "10000000"
+  dot:
+    size:             3
+    mintNetwork:      "POLKADOT_MAINNET"
+    balanceThreshold: "100000000000"
+  ton:
+    size:             5
+    mintNetwork:      "TON_MAINNET"
+    balanceThreshold: "1000000000"
+
+listen:             ":8080"
+networksConfigPath: "/etc/bridge/networks.yaml"
