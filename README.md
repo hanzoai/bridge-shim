@@ -1,68 +1,75 @@
-# Hanzo Bridge — fork template
+# Hanzo Bridge — DEPRECATED REPO
 
-Reference configuration + deployment scaffold for white-label bridge
-consumers. **NOT** a separate deployment image. Hanzo's own production
-bridge runs the upstream `ghcr.io/luxfi/bridge` image directly with
-tenant config supplied at runtime via env + ConfigMap.
+This repo is **no longer needed**. Hanzo's bridge deployment runs the
+canonical `ghcr.io/luxfi/bridge` image directly with tenant config
+supplied at runtime via environment variables (or a ConfigMap-mounted
+tenant.yaml when one is convenient — both are first-class in
+luxfi/bridge's declarative Bridge SDK pattern).
 
-## What lives here
+There is no Hanzo-specific Go code, no Hanzo-specific Docker image,
+no Hanzo-specific anything that justifies a separate repo. Tenant
+identity is config, not a code artifact.
 
-| File | Purpose |
-|---|---|
-| `tenant.yaml` | Declarative tenant config — brand, IAM endpoint `hanzo.id`, KMS endpoint `kms.hanzo.ai`, MPC cluster, strict-pq profile, supported chains, basket allowlist, fee receiver, domain `bridge.hanzo.network`, per-family release-pool sizing. |
-| `contracts/tenant.json` + `contracts/Deploy.sh` | Wraps `@luxfi/standard v1.7.5+`'s `DeployTenant.s.sol` with the Hanzo manifest. |
-| `k8s/` | Deployment / Service / IngressRoute / ConfigMap manifests targeting `bridge.hanzo.network`. |
-| `tenant_test.go` | Validates `tenant.yaml` against the upstream `github.com/luxfi/bridge/pkg/tenant` schema. |
-| `Dockerfile` | **Reference only.** Documents how a downstream fork that needs its own image (e.g. compliance bake-in like `partner/bridge`) would assemble one. Hanzo production does not build or publish this image. |
+## Where Hanzo's bridge config lives now
 
-## Production deployment — config, not image
-
-Hanzo production pulls the canonical upstream image and supplies
-tenant config at deploy time:
+In Hanzo's platform infrastructure repo (`~/work/hanzo/platform` →
+`platform.hanzo.ai`), as ConfigMap + Secret manifests applied to the
+`hanzo-bridge` namespace on whichever cluster runs Hanzo's bridge.
+The deployment YAML pulls the canonical upstream image:
 
 ```yaml
-# k8s/deployment.yaml — runtime config injection, not image bake
 spec:
-  template:
-    spec:
-      containers:
-        - name: bridge
-          image: ghcr.io/luxfi/bridge:v1.1.40        # clean upstream semver
-          args: ["--tenant-config", "/etc/bridge/tenant.yaml"]
-          volumeMounts:
-            - name: tenant-config
-              mountPath: /etc/bridge
-      volumes:
-        - name: tenant-config
-          configMap:
-            name: hanzo-bridge-tenant   # tenant.yaml in this ConfigMap
+  containers:
+    - name: bridge
+      image: ghcr.io/luxfi/bridge:v1.1.40
+      envFrom:
+        - configMapRef:
+            name: hanzo-bridge-config
+        - secretRef:
+            name: hanzo-bridge-secrets
 ```
 
-ConfigMap rotation is hot-reloadable — change `hanzo-bridge-tenant`,
-no image rebuild required. Same image runs every Hanzo environment
-(testnet, mainnet, dev) — environments differ only by ConfigMap.
+Same image every Hanzo environment runs (testnet, mainnet, dev) —
+environments differ only by ConfigMap.
 
-## Why this repo exists
+## What was here (historical)
 
-White-label by composition, never by fork. New OSS features land in
-`luxfi/bridge`; downstream consumers pick them up by bumping the image
-tag in their deployment manifest. This repo is the **template** any
-new consumer can clone:
+The repo formerly tried to be a "shim" — a Dockerfile that did
+`FROM ghcr.io/luxfi/bridge:vX.Y.Z` plus a baked tenant.yaml. That
+pattern is the right move only when compliance requires the config
+baked into a region-locked image (the `partner/bridge` US ATS/BD/TA
+case). Hanzo has no such constraint; runtime config wins.
 
+The Dockerfile + tenant.yaml + k8s manifests remain in tree as a
+reference for any future contributor who wants to read how Liquid
+Bridge composes its compliance-baked variant. None of this is the
+Hanzo deployment path.
+
+## Looking for the Hanzo bridge SDK?
+
+That's the browser-side `@luxfi/bridge` package — same package every
+Lux tenant consumes. There is no `@hanzoai/bridge`. White-label
+branding flows through `@luxfi/brand` at build time; the SDK itself
+is brand-neutral by design.
+
+```ts
+import { mountBridge } from '@luxfi/bridge'
+import hanzoBrand from '@hanzoai/brand/brand.json'
+
+mountBridge({
+  config: {
+    apiHost: 'https://api.bridge.hanzo.network',
+    env: 'mainnet',
+    brand: {
+      name: `${hanzoBrand.brand.shortName} Bridge`,
+      primaryColor: hanzoBrand.brand.primaryColor,
+    },
+  },
+})
 ```
-git clone https://github.com/hanzoai/bridge       # or zooai/bridge
-# edit tenant.yaml for your brand + endpoints
-# point your k8s manifests at ghcr.io/luxfi/bridge:vX.Y.Z
-# done.
-```
 
-If a downstream needs to bake config into an image for compliance
-reasons (the Liquidity pattern — US ATS/BD/TA requires region-locked
-GAR image with config bake-in), the `Dockerfile` here shows the
-minimal scaffold.
+## Repo disposition
 
-## Upstream pin
-
-`luxfi/bridge` `v1.1.40` — the image is at `ghcr.io/luxfi/bridge:v1.1.40`.
-Bump it in `k8s/deployment.yaml` to pick up new OSS features. Use clean
-semver — no tenant suffix.
+Recommended: archive this repo. The naming (`hanzoai/bridge-shim`)
+implies an artifact that no longer exists. Nothing here is load-
+bearing for Hanzo production.
