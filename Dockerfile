@@ -6,7 +6,7 @@
 #
 # Pin the upstream version explicitly. NEVER use :latest, :main, or
 # floating tags in production manifests per global CLAUDE.md.
-FROM ghcr.io/luxfi/bridge:v2.0.0
+FROM ghcr.io/luxfi/bridge:v1.1.40
 
 # Tenant configuration. ConfigMap mount in K8s overrides this for
 # rotating prod credentials without an image rebuild; the bake-in is
