@@ -1,8 +1,9 @@
-# Hanzo Bridge production image.
+# Hanzo Bridge — tenant deployment image.
 #
-# The shim ships zero Go code at runtime — the binary is the upstream
-# OSS bridge. We overlay our tenant.yaml at /etc/bridge/tenant.yaml
-# and instruct the entrypoint to load it via --tenant-config.
+# Zero Go code at runtime — the binary IS the upstream OSS bridge.
+# We overlay our tenant.yaml at /etc/bridge/tenant.yaml and pin
+# --tenant-config at the entrypoint. White-label by composition; the
+# upstream binary stays brand-neutral.
 #
 # Pin the upstream version explicitly. NEVER use :latest, :main, or
 # floating tags in production manifests per global CLAUDE.md.
