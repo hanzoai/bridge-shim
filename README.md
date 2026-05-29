@@ -1,59 +1,68 @@
-# Hanzo Bridge
+# Hanzo Bridge — fork template
 
-Tenant deployment of the canonical bridge — `bridge.hanzo.network`.
+Reference configuration + deployment scaffold for white-label bridge
+consumers. **NOT** a separate deployment image. Hanzo's own production
+bridge runs the upstream `ghcr.io/luxfi/bridge` image directly with
+tenant config supplied at runtime via env + ConfigMap.
 
-> The "shim" framing in earlier revs of this repo was misleading. This
-> is not a shim — it's the Hanzo Bridge **tenant deployment**: brand,
-> network endpoints, per-tenant infra wiring. The runtime binary IS
-> `ghcr.io/luxfi/bridge` (the OSS upstream), composed at deploy time
-> via tenant.yaml. **Rename target: `hanzoai/bridge-shim` → `hanzoai/bridge`.**
+## What lives here
 
-This repo ships:
+| File | Purpose |
+|---|---|
+| `tenant.yaml` | Declarative tenant config — brand, IAM endpoint `hanzo.id`, KMS endpoint `kms.hanzo.ai`, MPC cluster, strict-pq profile, supported chains, basket allowlist, fee receiver, domain `bridge.hanzo.network`, per-family release-pool sizing. |
+| `contracts/tenant.json` + `contracts/Deploy.sh` | Wraps `@luxfi/standard v1.7.5+`'s `DeployTenant.s.sol` with the Hanzo manifest. |
+| `k8s/` | Deployment / Service / IngressRoute / ConfigMap manifests targeting `bridge.hanzo.network`. |
+| `tenant_test.go` | Validates `tenant.yaml` against the upstream `github.com/luxfi/bridge/pkg/tenant` schema. |
+| `Dockerfile` | **Reference only.** Documents how a downstream fork that needs its own image (e.g. compliance bake-in like `partner/bridge`) would assemble one. Hanzo production does not build or publish this image. |
 
-- `tenant.yaml` — declarative Hanzo Bridge configuration (brand,
-  IAM endpoint `hanzo.id`, KMS endpoint `kms.hanzo.ai`, MPC cluster,
-  strict-pq profile, supported chains, basket allowlist, fee receiver,
-  domain `bridge.hanzo.network`, per-family release-pool sizing).
-- `Dockerfile` — overlays `tenant.yaml` on top of the upstream image
-  and pins `--tenant-config /etc/bridge/tenant.yaml` at the entrypoint.
-- `contracts/tenant.json` + `contracts/Deploy.sh` — wraps
-  `@luxfi/standard v1.7.5+`'s `DeployTenant.s.sol` with the Hanzo
-  manifest.
-- `k8s/` — Deployment, Service, IngressRoute, ConfigMap manifests
-  targeting `bridge.hanzo.network`.
-- `tenant_test.go` — single Go test that imports
-  `github.com/luxfi/bridge/pkg/tenant` and validates `tenant.yaml`.
+## Production deployment — config, not image
 
-## Why composition, not a fork
+Hanzo production pulls the canonical upstream image and supplies
+tenant config at deploy time:
+
+```yaml
+# k8s/deployment.yaml — runtime config injection, not image bake
+spec:
+  template:
+    spec:
+      containers:
+        - name: bridge
+          image: ghcr.io/luxfi/bridge:v1.1.40        # clean upstream semver
+          args: ["--tenant-config", "/etc/bridge/tenant.yaml"]
+          volumeMounts:
+            - name: tenant-config
+              mountPath: /etc/bridge
+      volumes:
+        - name: tenant-config
+          configMap:
+            name: hanzo-bridge-tenant   # tenant.yaml in this ConfigMap
+```
+
+ConfigMap rotation is hot-reloadable — change `hanzo-bridge-tenant`,
+no image rebuild required. Same image runs every Hanzo environment
+(testnet, mainnet, dev) — environments differ only by ConfigMap.
+
+## Why this repo exists
 
 White-label by composition, never by fork. New OSS features land in
-`luxfi/bridge` and we pick them up via a Dockerfile `FROM` tag bump —
-no merge conflicts, no drift, no extra audit surface.
-
-## Image tagging convention
-
-Tag the tenant image by the upstream version it composes:
+`luxfi/bridge`; downstream consumers pick them up by bumping the image
+tag in their deployment manifest. This repo is the **template** any
+new consumer can clone:
 
 ```
-ghcr.io/hanzoai/bridge:v1.1.40-hanzo
+git clone https://github.com/hanzoai/bridge       # or zooai/bridge
+# edit tenant.yaml for your brand + endpoints
+# point your k8s manifests at ghcr.io/luxfi/bridge:vX.Y.Z
+# done.
 ```
 
-NOT an independent semver. The Dockerfile `FROM` pin IS the contract
-— bumping a local `v0.x.y` every time upstream bumps is double-
-bookkeeping with no extra information. (Legacy `v0.1.x` and `v0.2.x`
-tags exist on this repo from the older convention and remain in
-history; new deploys use the `vX.Y.Z-hanzo` form.)
+If a downstream needs to bake config into an image for compliance
+reasons (the Liquidity pattern — US ATS/BD/TA requires region-locked
+GAR image with config bake-in), the `Dockerfile` here shows the
+minimal scaffold.
 
-## Deploy
+## Upstream pin
 
-```bash
-go test ./...                                          # validate config
-docker build -t ghcr.io/hanzoai/bridge:v1.1.40-hanzo . # tag matches upstream
-kubectl apply -k k8s/
-HANZO_PRIVATE_KEY=0x... ./contracts/Deploy.sh https://rpc.hanzo.network
-```
-
-## Upstream pins
-
-- `ghcr.io/luxfi/bridge`: v1.1.40
-- `@luxfi/standard`: v1.7.5
+`luxfi/bridge` `v1.1.40` — the image is at `ghcr.io/luxfi/bridge:v1.1.40`.
+Bump it in `k8s/deployment.yaml` to pick up new OSS features. Use clean
+semver — no tenant suffix.
