@@ -37,13 +37,13 @@ environments differ only by ConfigMap.
 The repo formerly tried to be a "shim" — a Dockerfile that did
 `FROM ghcr.io/luxfi/bridge:vX.Y.Z` plus a baked tenant.yaml. That
 pattern is the right move only when compliance requires the config
-baked into a region-locked image (the `partner/bridge` US ATS/BD/TA
-case). Hanzo has no such constraint; runtime config wins.
+baked into a region-locked image (US ATS/BD/TA regulated case).
+Hanzo has no such constraint; runtime config wins.
 
 The Dockerfile + tenant.yaml + k8s manifests remain in tree as a
-reference for any future contributor who wants to read how Liquid
-Bridge composes its compliance-baked variant. None of this is the
-Hanzo deployment path.
+reference for any future contributor who wants to read how a
+compliance-baked variant composes. None of this is the Hanzo
+deployment path.
 
 ## Looking for the Hanzo bridge SDK?
 
