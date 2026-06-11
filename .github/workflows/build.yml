@@ -10,7 +10,7 @@ on:
 jobs:
   validate:
     name: validate tenant config
-    runs-on: hanzo-build-linux-amd64
+    runs-on: [self-hosted, linux, amd64]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -22,7 +22,7 @@ jobs:
   build:
     name: build + push image
     needs: validate
-    runs-on: hanzo-build-linux-amd64
+    runs-on: [self-hosted, linux, amd64]
     if: startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: read
