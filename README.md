@@ -1,3 +1,5 @@
+<p align="center"><img src=".github/hero.svg" alt="bridge-shim" width="880"></p>
+
 # Hanzo Bridge — DEPRECATED REPO
 
 This repo is **no longer needed**. Hanzo's bridge deployment runs the
