@@ -75,3 +75,5 @@ mountBridge({
 Recommended: archive this repo. The naming (`hanzoai/bridge-shim`)
 implies an artifact that no longer exists. Nothing here is load-
 bearing for Hanzo production.
+
+Licensed under **MIT OR Apache-2.0**, per [HIP-0137](https://github.com/hanzoai/hips/blob/main/HIPs/hip-0137-one-license.md).
