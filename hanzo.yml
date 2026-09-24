@@ -1,0 +1,9 @@
+# Hanzo CI/CD for hanzoai/bridge-shim: .github/workflows/cicd.yml imports hanzoai/ci,
+# which reads this file. The build door builds each image, one BuildKit Job
+# per platform.
+images:
+  - name: bridge-shim
+    context: .
+    dockerfile: Dockerfile
+    repo: ghcr.io/hanzoai/bridge-shim
+    platforms: [linux/amd64]
